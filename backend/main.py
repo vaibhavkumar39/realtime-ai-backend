@@ -37,7 +37,6 @@ async def chat_socket(ws: WebSocket):
                 ai_text += token
                 await ws.send_text(token)
 
-            # 🔴 IMPORTANT: explicit end-of-response marker
             await ws.send_text("__END__")
 
             messages.append({"role": "assistant", "content": ai_text})
