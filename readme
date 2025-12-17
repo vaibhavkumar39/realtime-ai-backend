@@ -120,7 +120,7 @@ pip install -r requirements.txt
 
 ### 4. Get Groq API Key
 
-1. Go to: [https://console.groq.com](https://console.groq.com)
+1. Go to: https://console.groq.com/home?utm_source=website&utm_medium=outbound_link&utm_campaign=dev_console_click
 2. Sign in or create an account
 3. Navigate to **API Keys**
 4. Generate a new API key
