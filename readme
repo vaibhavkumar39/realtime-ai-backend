@@ -1,0 +1,198 @@
+# Real-Time AI Chat (WebSocket Based)
+
+## What This Project Does
+
+This project is a simple real-time AI chat system.
+
+* Users send messages through a WebSocket connection
+* AI responses are streamed back token by token
+* All messages are stored in a PostgreSQL database
+* When a chat session ends, an LLM generates a short summary using the stored conversation history
+
+The goal is to demonstrate **WebSockets, streaming AI responses, persistence, and post-session analysis**.
+
+---
+
+## How It Works (Simple View)
+
+```
+User (Streamlit UI)
+        ↓ WebSocket
+FastAPI Backend
+        ↓
+PostgreSQL (stores sessions + messages)
+        ↓
+Groq LLM (AI responses + session summary)
+```
+
+* One WebSocket connection = one chat session
+* Messages are saved as they happen
+* Summary is generated only after the session ends
+
+---
+
+## Main Features
+
+* Async FastAPI backend
+* WebSocket-based communication (no REST chat)
+* Streaming AI responses
+* PostgreSQL storage for sessions and events
+* Automatic session summary using an LLM
+* Simple Streamlit frontend for testing
+
+---
+
+## Tech Stack
+
+* Python 3
+* FastAPI + Uvicorn
+* PostgreSQL
+* Streamlit
+* Groq LLM (`llama-3.1-8b-instant`)
+
+---
+
+## Database Tables
+
+### sessions
+
+Stores information about each chat session.
+
+* `id` – session UUID
+* `start_time` – when the session started
+* `end_time` – when the session ended
+* `duration_seconds` – session length
+* `summary` – AI-generated session summary
+
+### session_events
+
+Stores every user and AI message.
+
+* `session_id` – related session
+* `event_type` – user_message / ai_message
+* `role` – user / assistant
+* `content` – message text
+* `created_at` – timestamp
+
+---
+
+## How Session Summary Is Generated
+
+1. Every message is saved to `session_events`
+2. When the WebSocket disconnects:
+
+   * Stored messages are collected
+   * Sent to the LLM
+   * A short summary is generated
+3. The summary is saved in `sessions.summary`
+
+The summary is based on **stored data**, not live memory.
+
+---
+
+## Setup Instructions
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd realtime-ai-backend
+```
+
+---
+
+### 2. Create and Activate Virtual Environment
+
+```bash
+python -m venv env
+env\Scripts\activate
+```
+
+---
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Get Groq API Key
+
+1. Go to: [https://console.groq.com](https://console.groq.com)
+2. Sign in or create an account
+3. Navigate to **API Keys**
+4. Generate a new API key
+5. Copy the key
+
+---
+
+### 5. Environment Configuration
+
+Create a `.env` file in the project root:
+
+```
+DATABASE_URL=postgresql://postgres:<your_password>@localhost:5432/realtime_ai
+GROQ_API_KEY=<your_groq_api_key>
+```
+
+---
+
+## Database Setup
+
+Run the SQL schema located at `sql/schema.sql` using pgAdmin or psql.
+
+---
+
+## Running the Project
+
+### Start Backend Server
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+---
+
+### Start Frontend
+
+```bash
+streamlit run frontend/app.py
+```
+
+Open browser at:
+
+```
+http://localhost:8501
+```
+
+---
+
+## Viewing Session Summaries
+
+To see generated summaries:
+
+```sql
+SELECT id, summary, duration_seconds
+FROM sessions
+WHERE summary IS NOT NULL
+ORDER BY start_time DESC;
+```
+
+To see messages used for the summary:
+
+```sql
+SELECT role, content
+FROM session_events
+WHERE session_id = '<session-uuid>'
+ORDER BY created_at;
+```
+
+---
+
+## Notes
+
+* Conversational memory is limited to a single WebSocket session
+* Refreshing the UI creates a new session
+* Streamlit is used only for testing and demonstration
